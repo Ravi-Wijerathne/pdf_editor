@@ -1,50 +1,87 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { readFile, writeFile } from '@tauri-apps/plugin-fs';
+import PdfViewer from './components/PdfViewer';
+import Toolbar from './components/Toolbar';
+import PageControls from './components/PageControls';
+import { usePdf } from './hooks/usePdf';
+// import { usePageOps } from './hooks/usePageOps';
+import './App.css';
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const {
+    pdfData,
+    loadPdf,
+    applyInsertText,
+    applyHighlightArea,
+    applyReorderPages,
+    applyMergePdfs,
+    applyRemovePage,
+  } = usePdf();
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const handleOpenFile = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+      });
+      if (selected && typeof selected === 'string') {
+        const contents = await readFile(selected);
+        loadPdf(contents.buffer);
+      }
+    } catch (error) {
+      console.error('Error opening file:', error);
+    }
+  };
+
+  const handleSaveAs = async () => {
+    if (!pdfData) return;
+    try {
+      const filePath = await save({
+        filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+      });
+      if (filePath) {
+        await writeFile(filePath, new Uint8Array(pdfData));
+      }
+    } catch (error) {
+      console.error('Error saving file:', error);
+    }
+  };
+
+  const handlePageCountChange = () => {
+    // Page count changed
+  };
+
+  // const { pdf, loadPdf } = usePdf();
+  // const { reorderPages, mergePages, splitPage } = usePageOps();
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
+    <div className="app min-h-screen bg-gray-50">
+      <Toolbar
+        onAddText={applyInsertText}
+        onHighlight={applyHighlightArea}
+        onMovePages={applyReorderPages}
+        onMerge={async (buffers) => {
+          if (pdfData) {
+            await applyMergePdfs([pdfData, ...buffers]);
+          } else {
+            await applyMergePdfs(buffers);
+          }
         }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+        onSplit={applyRemovePage}
+        onSave={handleSaveAs}
+        hasPdf={!!pdfData}
+      />
+      <div className="file-controls p-4 bg-white border-b border-gray-300">
+        <button
+          onClick={handleOpenFile}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Open PDF
+        </button>
+      </div>
+      <PdfViewer pdfData={pdfData} onPageCountChange={handlePageCountChange} />
+      <PageControls />
+    </div>
   );
 }
 
