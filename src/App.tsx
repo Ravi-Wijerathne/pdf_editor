@@ -1,50 +1,119 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { readFile, writeFile } from '@tauri-apps/plugin-fs';
+import PdfViewer from './components/PdfViewer';
+import Toolbar from './components/Toolbar';
+import PageControls from './components/PageControls';
+import { usePdf } from './hooks/usePdf';
+// import { usePageOps } from './hooks/usePageOps';
+import './App.css';
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const {
+    pdfData,
+    loadPdf,
+    applyInsertText,
+    applyHighlightArea,
+    applyReorderPages,
+    applyMergePdfs,
+    applyRemovePage,
+    refreshKey,
+  } = usePdf();
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const handleOpenFile = async () => {
+    try {
+      console.log('Opening file dialog...');
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+      });
+      console.log('Selected file:', selected);
+      if (selected && typeof selected === 'string') {
+        console.log('Reading file:', selected);
+        const contents = await readFile(selected);
+        console.log('File read, size:', contents.length, 'type:', typeof contents, 'constructor:', contents.constructor.name);
+        
+        // Tauri's readFile returns Uint8Array, convert to ArrayBuffer for loadPdf
+        let arrayBuffer: ArrayBuffer;
+        if (contents instanceof Uint8Array) {
+          // Create a proper ArrayBuffer from Uint8Array
+          arrayBuffer = contents.buffer.slice(contents.byteOffset, contents.byteOffset + contents.byteLength);
+        } else {
+          // Handle edge case where contents might be something else
+          console.warn('Contents is not Uint8Array, converting...', contents);
+          const uint8Array = new Uint8Array(contents as any);
+          arrayBuffer = uint8Array.buffer;
+        }
+        
+        console.log('ArrayBuffer created, size:', arrayBuffer.byteLength);
+        loadPdf(arrayBuffer);
+      }
+    } catch (error) {
+      console.error('Error opening file:', error);
+      alert('Error opening file: ' + error);
+    }
+  };
+
+  const handleSaveAs = async () => {
+    if (!pdfData) {
+      alert('No PDF data to save');
+      return;
+    }
+    try {
+      console.log('Opening save dialog...');
+      const filePath = await save({
+        filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+      });
+      console.log('Save path selected:', filePath);
+      if (filePath) {
+        console.log('Preparing to write file, data size:', pdfData.byteLength);
+        
+        // pdfData is already a Uint8Array, use it directly
+        console.log('Writing file directly with Uint8Array, size:', pdfData.length);
+        await writeFile(filePath, pdfData);
+        console.log('File saved successfully to:', filePath);
+        alert('PDF saved successfully!');
+      }
+    } catch (error) {
+      console.error('Error saving file:', error);
+      alert('Error saving file: ' + error);
+    }
+  };
+
+  const handlePageCountChange = () => {
+    // Page count changed
+  };
+
+  // const { pdf, loadPdf } = usePdf();
+  // const { reorderPages, mergePages, splitPage } = usePageOps();
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
+    <div className="app min-h-screen bg-gray-50">
+      <Toolbar
+        onAddText={applyInsertText}
+        onHighlight={applyHighlightArea}
+        onMovePages={applyReorderPages}
+        onMerge={async (buffers) => {
+          if (pdfData) {
+            await applyMergePdfs([pdfData, ...buffers]);
+          } else {
+            await applyMergePdfs(buffers);
+          }
         }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+        onSplit={applyRemovePage}
+        onSave={handleSaveAs}
+        hasPdf={!!pdfData}
+      />
+      <div className="file-controls p-4 bg-white border-b border-gray-300">
+        <button
+          onClick={handleOpenFile}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Open PDF
+        </button>
+      </div>
+      <PdfViewer pdfData={pdfData} refreshKey={refreshKey} onPageCountChange={handlePageCountChange} />
+      <PageControls />
+    </div>
   );
 }
 
