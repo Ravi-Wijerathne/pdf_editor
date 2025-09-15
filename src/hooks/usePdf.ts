@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { insertText, highlightArea, reorderPages, mergePdfs, removePage } from '../utils/pdfUtils';
 
 export const usePdf = () => {
-  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Force re-renders
 
   const loadPdf = (data: ArrayBuffer) => {
-    setPdfData(data);
+    // Convert ArrayBuffer to Uint8Array consistently
+    const uint8Data = new Uint8Array(data);
+    setPdfData(uint8Data);
+    setRefreshKey(prev => prev + 1);
   };
 
   const applyInsertText = async (
@@ -18,7 +22,9 @@ export const usePdf = () => {
     if (!pdfData) return;
     try {
       const newData = await insertText(pdfData, pageIndex, text, x, y, fontSize);
-      setPdfData(newData.buffer as ArrayBuffer);
+      // newData is already a Uint8Array from pdf-lib
+      setPdfData(newData);
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error('Error inserting text:', error);
     }
@@ -34,7 +40,9 @@ export const usePdf = () => {
     if (!pdfData) return;
     try {
       const newData = await highlightArea(pdfData, pageIndex, x, y, width, height);
-      setPdfData(newData.buffer as ArrayBuffer);
+      // newData is already a Uint8Array from pdf-lib
+      setPdfData(newData);
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error('Error highlighting area:', error);
     }
@@ -43,17 +51,26 @@ export const usePdf = () => {
   const applyReorderPages = async (newOrder: number[]) => {
     if (!pdfData) return;
     try {
+      console.log('Applying reorder pages:', newOrder);
       const newData = await reorderPages(pdfData, newOrder);
-      setPdfData(newData.buffer as ArrayBuffer);
+      console.log('Reorder completed, new data size:', newData.byteLength);
+      
+      // newData is already a Uint8Array from pdf-lib
+      setPdfData(newData);
+      setRefreshKey(prev => prev + 1);
+      console.log('PDF data updated after reorder - refresh key will be:', refreshKey + 1);
+      
     } catch (error) {
       console.error('Error reordering pages:', error);
     }
   };
 
-  const applyMergePdfs = async (pdfBuffers: ArrayBuffer[]) => {
+  const applyMergePdfs = async (pdfBuffers: (Uint8Array | ArrayBuffer)[]) => {
     try {
       const newData = await mergePdfs(pdfBuffers);
-      setPdfData(newData.buffer as ArrayBuffer);
+      // newData is already a Uint8Array from pdf-lib
+      setPdfData(newData);
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error('Error merging PDFs:', error);
     }
@@ -63,7 +80,9 @@ export const usePdf = () => {
     if (!pdfData) return;
     try {
       const newData = await removePage(pdfData, pageIndex);
-      setPdfData(newData.buffer as ArrayBuffer);
+      // newData is already a Uint8Array from pdf-lib
+      setPdfData(newData);
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error('Error removing page:', error);
     }
@@ -71,6 +90,7 @@ export const usePdf = () => {
 
   return {
     pdfData,
+    refreshKey,
     loadPdf,
     applyInsertText,
     applyHighlightArea,

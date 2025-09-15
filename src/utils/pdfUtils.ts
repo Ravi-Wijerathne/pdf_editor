@@ -12,7 +12,7 @@ export const savePdfDocument = (doc: any) => {
 };
 
 export const insertText = async (
-  pdfData: ArrayBuffer,
+  pdfData: Uint8Array | ArrayBuffer,
   pageIndex: number,
   text: string,
   x: number,
@@ -26,7 +26,7 @@ export const insertText = async (
 };
 
 export const highlightArea = async (
-  pdfData: ArrayBuffer,
+  pdfData: Uint8Array | ArrayBuffer,
   pageIndex: number,
   x: number,
   y: number,
@@ -41,7 +41,7 @@ export const highlightArea = async (
 };
 
 export const reorderPages = async (
-  pdfData: ArrayBuffer,
+  pdfData: Uint8Array | ArrayBuffer,
   newOrder: number[]
 ): Promise<Uint8Array> => {
   const pdfDoc = await PDFDocument.load(pdfData);
@@ -56,7 +56,7 @@ export const reorderPages = async (
 };
 
 export const mergePdfs = async (
-  pdfBuffers: ArrayBuffer[]
+  pdfBuffers: (Uint8Array | ArrayBuffer)[]
 ): Promise<Uint8Array> => {
   const mergedPdf = await PDFDocument.create();
 
@@ -70,7 +70,7 @@ export const mergePdfs = async (
 };
 
 export const removePage = async (
-  pdfData: ArrayBuffer,
+  pdfData: Uint8Array | ArrayBuffer,
   pageIndex: number
 ): Promise<Uint8Array> => {
   const pdfDoc = await PDFDocument.load(pdfData);

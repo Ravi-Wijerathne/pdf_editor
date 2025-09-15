@@ -1,15 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+// Configure PDF.js worker using Vite's URL import
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 interface PdfViewerProps {
-  pdfData: ArrayBuffer | null;
+  pdfData: Uint8Array | null;
+  refreshKey?: number;
   onPageCountChange: (count: number) => void;
 }
 
-const PdfViewer: React.FC<PdfViewerProps> = ({ pdfData, onPageCountChange }) => {
+const PdfViewer: React.FC<PdfViewerProps> = ({ pdfData, refreshKey, onPageCountChange }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -18,15 +20,18 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ pdfData, onPageCountChange }) => 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('PdfViewer useEffect triggered - pdfData:', !!pdfData, 'refreshKey:', refreshKey);
     if (pdfData) {
+      console.log('About to call loadPdf with data size:', pdfData.byteLength);
       loadPdf(pdfData);
     } else {
+      console.log('No pdfData, clearing viewer');
       setPdfDoc(null);
       setTotalPages(0);
       setCurrentPage(1);
       onPageCountChange(0);
     }
-  }, [pdfData, onPageCountChange]);
+  }, [pdfData, refreshKey, onPageCountChange]);
 
   useEffect(() => {
     if (pdfDoc && canvasRef.current) {
@@ -34,18 +39,36 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ pdfData, onPageCountChange }) => 
     }
   }, [pdfDoc, currentPage, scale]);
 
-  const loadPdf = async (data: ArrayBuffer) => {
+  const loadPdf = async (data: Uint8Array | ArrayBuffer) => {
     try {
       setError(null);
-      const loadingTask = pdfjsLib.getDocument({ data });
+      console.log('Loading PDF with data size:', data.byteLength);
+      console.log('Data type:', data.constructor.name);
+      
+      // Create a fresh copy of the data to avoid detached ArrayBuffer issues
+      let pdfData: Uint8Array;
+      if (data instanceof ArrayBuffer) {
+        // Create a completely new Uint8Array with copied data
+        pdfData = new Uint8Array(data.byteLength);
+        pdfData.set(new Uint8Array(data));
+      } else {
+        // Create a copy of the Uint8Array to ensure it's not detached
+        pdfData = new Uint8Array(data.byteLength);
+        pdfData.set(data);
+      }
+      
+      console.log('Created fresh PDF data copy, size:', pdfData.byteLength);
+      
+      const loadingTask = pdfjsLib.getDocument({ data: pdfData });
       const pdf = await loadingTask.promise;
       setPdfDoc(pdf);
       setTotalPages(pdf.numPages);
       setCurrentPage(1);
       onPageCountChange(pdf.numPages);
+      console.log('PDF loaded successfully, pages:', pdf.numPages);
     } catch (error) {
       console.error('Error loading PDF:', error);
-      setError('Failed to load PDF. Please check if the file is valid.');
+      setError(`Failed to load PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setPdfDoc(null);
       setTotalPages(0);
       setCurrentPage(1);

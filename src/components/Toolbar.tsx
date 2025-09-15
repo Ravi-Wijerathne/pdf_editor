@@ -42,10 +42,41 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const handleMovePages = async () => {
-    if (!hasPdf) return;
+    console.log('handleMovePages called, hasPdf:', hasPdf);
+    
+    if (!hasPdf) {
+      console.log('No PDF loaded, returning');
+      alert('Please open a PDF file first');
+      return;
+    }
+    
     const orderStr = prompt('Enter new page order (comma-separated indices, e.g., 1,0,2):') || '';
+    console.log('User entered order string:', orderStr);
+    
+    if (!orderStr.trim()) {
+      console.log('Empty order string, returning');
+      return;
+    }
+    
     const newOrder = orderStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-    await onMovePages(newOrder);
+    console.log('Parsed order array:', newOrder);
+    
+    if (newOrder.length === 0) {
+      console.log('No valid numbers in order, returning');
+      alert('Please enter valid page numbers (e.g., 1,0)');
+      return;
+    }
+    
+    console.log('Calling onMovePages with:', newOrder);
+    
+    try {
+      await onMovePages(newOrder);
+      console.log('onMovePages call completed');
+      alert('Pages reordered successfully! Check the preview.');
+    } catch (error) {
+      console.error('Error in onMovePages:', error);
+      alert('Error reordering pages: ' + error);
+    }
   };
 
   const handleMerge = async () => {
@@ -56,7 +87,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
       });
       if (selected && typeof selected === 'string') {
         const contents = await readFile(selected);
-        onMerge([contents.buffer]);
+        // Convert Uint8Array to ArrayBuffer using a fresh buffer to avoid detached issues
+        const freshBuffer = new ArrayBuffer(contents.byteLength);
+        new Uint8Array(freshBuffer).set(contents);
+        onMerge([freshBuffer]);
       }
     } catch (error) {
       console.error('Error merging:', error);
