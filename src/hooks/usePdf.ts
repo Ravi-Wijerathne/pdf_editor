@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { insertText, highlightArea, reorderPages, mergePdfs, removePage } from '../utils/pdfUtils';
+import { reorderPages, mergePdfs, removePage } from '../utils/pdfUtils';
 
 export const usePdf = () => {
   const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
@@ -10,42 +10,6 @@ export const usePdf = () => {
     const uint8Data = new Uint8Array(data);
     setPdfData(uint8Data);
     setRefreshKey(prev => prev + 1);
-  };
-
-  const applyInsertText = async (
-    pageIndex: number,
-    text: string,
-    x: number,
-    y: number,
-    fontSize: number = 12
-  ) => {
-    if (!pdfData) return;
-    try {
-      const newData = await insertText(pdfData, pageIndex, text, x, y, fontSize);
-      // newData is already a Uint8Array from pdf-lib
-      setPdfData(newData);
-      setRefreshKey(prev => prev + 1);
-    } catch (error) {
-      console.error('Error inserting text:', error);
-    }
-  };
-
-  const applyHighlightArea = async (
-    pageIndex: number,
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ) => {
-    if (!pdfData) return;
-    try {
-      const newData = await highlightArea(pdfData, pageIndex, x, y, width, height);
-      // newData is already a Uint8Array from pdf-lib
-      setPdfData(newData);
-      setRefreshKey(prev => prev + 1);
-    } catch (error) {
-      console.error('Error highlighting area:', error);
-    }
   };
 
   const applyReorderPages = async (newOrder: number[]) => {
@@ -92,8 +56,6 @@ export const usePdf = () => {
     pdfData,
     refreshKey,
     loadPdf,
-    applyInsertText,
-    applyHighlightArea,
     applyReorderPages,
     applyMergePdfs,
     applyRemovePage,

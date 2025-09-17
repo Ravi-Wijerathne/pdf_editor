@@ -2,7 +2,6 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 import { readFile, writeFile } from '@tauri-apps/plugin-fs';
 import PdfViewer from './components/PdfViewer';
 import Toolbar from './components/Toolbar';
-import PageControls from './components/PageControls';
 import { usePdf } from './hooks/usePdf';
 // import { usePageOps } from './hooks/usePageOps';
 import './App.css';
@@ -11,8 +10,6 @@ function App() {
   const {
     pdfData,
     loadPdf,
-    applyInsertText,
-    applyHighlightArea,
     applyReorderPages,
     applyMergePdfs,
     applyRemovePage,
@@ -89,8 +86,6 @@ function App() {
   return (
     <div className="app min-h-screen bg-gray-50">
       <Toolbar
-        onAddText={applyInsertText}
-        onHighlight={applyHighlightArea}
         onMovePages={applyReorderPages}
         onMerge={async (buffers) => {
           if (pdfData) {
@@ -112,7 +107,6 @@ function App() {
         </button>
       </div>
       <PdfViewer pdfData={pdfData} refreshKey={refreshKey} onPageCountChange={handlePageCountChange} />
-      <PageControls />
     </div>
   );
 }
