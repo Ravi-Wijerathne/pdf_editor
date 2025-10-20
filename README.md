@@ -5,6 +5,7 @@ A powerful desktop PDF editor built with Tauri, React, and TypeScript. Edit PDFs
 ## Features
 
 - 📄 **Open PDF Files** - Load and view PDF documents
+- ✏️ **Edit Text** - Edit and delete text directly in PDFs (like Adobe Acrobat)
 - 🔄 **Reorder Pages** - Rearrange pages in any order
 - 🔗 **Merge PDFs** - Combine multiple PDF files into one
 - ✂️ **Split PDFs** - Remove specific pages from documents
@@ -72,6 +73,22 @@ A powerful desktop PDF editor built with Tauri, React, and TypeScript. Edit PDFs
 - Use **Zoom In** and **Zoom Out** buttons to adjust the view
 - The page counter shows your current position (e.g., "Page 1 of 5")
 
+### Editing Text
+
+1. Make sure a PDF is loaded
+2. Click the **"Edit Text"** button in the toolbar to enable text editing mode
+3. The button will show **"✓ Edit Text Mode"** when active
+4. Hover over any text in the PDF - it will be highlighted in yellow
+5. Click on the text you want to edit
+6. A dialog will appear with the following options:
+   - **Edit**: Modify the text content in the text area
+   - **Save**: Apply your changes to the PDF
+   - **Delete**: Remove the selected text from the PDF
+   - **Cancel**: Close the dialog without making changes
+7. Changes are applied immediately to the current PDF
+8. Use **"Save"** button to export the edited PDF to a file
+9. Click **"Edit Text"** again to exit editing mode
+
 ### Reordering Pages
 
 1. Make sure a PDF is loaded
@@ -117,8 +134,8 @@ A powerful desktop PDF editor built with Tauri, React, and TypeScript. Edit PDFs
 - **[Tauri](https://tauri.app/)** - Desktop application framework
 - **[React](https://reactjs.org/)** - Frontend UI library
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
-- **[PDF.js](https://mozilla.github.io/pdf.js/)** - PDF rendering engine
-- **[PDF-lib](https://pdf-lib.js.org/)** - PDF manipulation library
+- **[PDF.js](https://mozilla.github.io/pdf.js/)** - PDF rendering and text extraction engine
+- **[PDF-lib](https://pdf-lib.js.org/)** - PDF manipulation and content stream editing library
 - **[TailwindCSS](https://tailwindcss.com/)** - Utility-first CSS framework
 - **[Vite](https://vitejs.dev/)** - Build tool and development server
 
@@ -143,7 +160,9 @@ A powerful desktop PDF editor built with Tauri, React, and TypeScript. Edit PDFs
 1. **File Loading**: Tauri file dialog → File system read → ArrayBuffer → Uint8Array
 2. **PDF Processing**: Uint8Array → pdf-lib manipulation → New Uint8Array
 3. **Rendering**: Uint8Array → PDF.js worker → Canvas rendering
-4. **Saving**: Uint8Array → Tauri file system write
+4. **Text Extraction**: PDF.js → Text content with positions → Text items array
+5. **Text Editing**: Text items → pdf-lib content stream manipulation → New Uint8Array
+6. **Saving**: Uint8Array → Tauri file system write
 
 ## Troubleshooting
 
