@@ -7,7 +7,9 @@ interface ToolbarProps {
   onMerge: (pdfBuffers: ArrayBuffer[]) => void;
   onSplit: (pageIndex: number) => void;
   onSave: () => void;
+  onToggleEditMode?: () => void;
   hasPdf: boolean;
+  isEditMode?: boolean;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -15,7 +17,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onMerge,
   onSplit,
   onSave,
+  onToggleEditMode,
   hasPdf,
+  isEditMode = false,
 }) => {
   const handleMovePages = async () => {
     console.log('handleMovePages called, hasPdf:', hasPdf);
@@ -82,6 +86,17 @@ const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <div className="toolbar bg-gray-100 p-4 border-b border-gray-300">
       <div className="flex space-x-2">
+        <button
+          onClick={onToggleEditMode}
+          disabled={!hasPdf}
+          className={`px-4 py-2 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed ${
+            isEditMode 
+              ? 'bg-green-600 hover:bg-green-700' 
+              : 'bg-green-500 hover:bg-green-600'
+          }`}
+        >
+          {isEditMode ? '✓ Edit Text Mode' : 'Edit Text'}
+        </button>
         <button
           onClick={handleMovePages}
           disabled={!hasPdf}
