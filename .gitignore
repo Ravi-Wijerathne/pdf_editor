@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/release/GITHUB_RELEASE_GUIDE.md
+/release/README_RELEASE_SUMMARY.md
+/release/RELEASE_NOTES.md
+release
+.vscode
