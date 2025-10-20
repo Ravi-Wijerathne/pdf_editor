@@ -106,23 +106,37 @@ export const editTextInPdf = async (
   y: number,
   newText: string,
   fontSize: number = 12,
+  oldTextWidth: number = 0,
+  oldTextHeight: number = 0,
   coverOldText: boolean = true
 ): Promise<Uint8Array> => {
+  console.log('editTextInPdf called:', { pageIndex, x, y, newText, fontSize, oldTextWidth, oldTextHeight, coverOldText });
+  
   const pdfDoc = await PDFDocument.load(pdfData);
   const page = pdfDoc.getPage(pageIndex);
+  const pageHeight = page.getHeight();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  
+  // Note: pdf-lib Y coordinate starts from BOTTOM of page
+  // We receive Y as distance from bottom (already converted)
+  console.log('Page height:', pageHeight, 'Y position:', y);
   
   // If covering old text, draw a white rectangle first
   if (coverOldText) {
-    const textWidth = font.widthOfTextAtSize(newText, fontSize);
-    const textHeight = fontSize * 1.2;
+    // Use the OLD text width/height to cover the original text
+    const coverWidth = oldTextWidth > 0 ? oldTextWidth + 10 : font.widthOfTextAtSize(newText, fontSize) + 10;
+    const coverHeight = oldTextHeight > 0 ? oldTextHeight + 6 : fontSize * 1.5;
+    
+    // Draw white rectangle to cover old text
     page.drawRectangle({
-      x: x - 2,
-      y: y - 2,
-      width: textWidth + 4,
-      height: textHeight + 4,
+      x: x - 5,
+      y: y - fontSize * 0.25, // Adjust for baseline
+      width: coverWidth,
+      height: coverHeight,
       color: rgb(1, 1, 1), // white
     });
+    
+    console.log('Drew white rectangle to cover old text:', { x: x - 5, y: y - fontSize * 0.25, width: coverWidth, height: coverHeight });
   }
   
   // Draw the new text
@@ -133,6 +147,8 @@ export const editTextInPdf = async (
     font,
     color: rgb(0, 0, 0),
   });
+  
+  console.log('Drew new text:', newText, 'at', x, y, 'with font size:', fontSize);
   
   return pdfDoc.save();
 };
@@ -146,17 +162,21 @@ export const deleteTextInPdf = async (
   width: number,
   height: number
 ): Promise<Uint8Array> => {
+  console.log('deleteTextInPdf called:', { pageIndex, x, y, width, height });
+  
   const pdfDoc = await PDFDocument.load(pdfData);
   const page = pdfDoc.getPage(pageIndex);
   
   // Cover the text with a white rectangle
   page.drawRectangle({
-    x,
-    y,
-    width,
-    height,
+    x: x - 2,
+    y: y - height * 0.2, // Adjust for baseline
+    width: width + 4,
+    height: height * 1.2,
     color: rgb(1, 1, 1), // white
   });
+  
+  console.log('Drew white rectangle to delete text');
   
   return pdfDoc.save();
 };

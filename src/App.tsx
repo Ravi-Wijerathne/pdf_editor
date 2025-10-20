@@ -94,13 +94,13 @@ function App() {
     y: number,
     newText: string,
     fontSize: number,
-    _width: number,
-    _height: number
+    width: number,
+    height: number
   ) => {
     if (!pdfData) return;
 
     try {
-      console.log('Editing text at page', pageIndex, 'position', x, y, 'new text:', newText);
+      console.log('App handleTextEdit - Editing text at page', pageIndex, 'position', x, y, 'new text:', newText, 'old dimensions:', width, height);
       const updatedPdf = await editTextInPdf(
         pdfData,
         pageIndex,
@@ -108,11 +108,13 @@ function App() {
         y,
         newText,
         fontSize,
-        true // Cover old text
+        width,  // Pass old text width
+        height, // Pass old text height
+        true    // Cover old text
       );
       
       // Update the PDF data with the edited version
-      loadPdf(updatedPdf.buffer);
+      loadPdf(updatedPdf.buffer as ArrayBuffer);
       alert('Text edited successfully!');
     } catch (error) {
       console.error('Error editing text:', error);
@@ -141,7 +143,7 @@ function App() {
       );
       
       // Update the PDF data with the edited version
-      loadPdf(updatedPdf.buffer);
+      loadPdf(updatedPdf.buffer as ArrayBuffer);
       alert('Text deleted successfully!');
     } catch (error) {
       console.error('Error deleting text:', error);
