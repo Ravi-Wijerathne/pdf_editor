@@ -1,4 +1,4 @@
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 // Placeholder utility functions for pdf-lib operations
 export const loadPdfDocument = (data: Uint8Array) => {
@@ -9,6 +9,26 @@ export const loadPdfDocument = (data: Uint8Array) => {
 export const savePdfDocument = (doc: any) => {
   console.log('Saving PDF document', doc);
   return new Uint8Array();
+};
+
+// Text item interface for extracted text
+export interface TextItem {
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fontSize: number;
+}
+
+// Extract text items with positions from a PDF page
+export const extractTextItems = async (
+  _pdfData: Uint8Array | ArrayBuffer,
+  _pageIndex: number
+): Promise<TextItem[]> => {
+  // This function will be implemented in the component using PDF.js
+  // as it provides better text extraction capabilities
+  return [];
 };
 
 export const insertText = async (
@@ -75,5 +95,68 @@ export const removePage = async (
 ): Promise<Uint8Array> => {
   const pdfDoc = await PDFDocument.load(pdfData);
   pdfDoc.removePage(pageIndex);
+  return pdfDoc.save();
+};
+
+// Edit text in PDF by overlaying new text at specified position
+export const editTextInPdf = async (
+  pdfData: Uint8Array | ArrayBuffer,
+  pageIndex: number,
+  x: number,
+  y: number,
+  newText: string,
+  fontSize: number = 12,
+  coverOldText: boolean = true
+): Promise<Uint8Array> => {
+  const pdfDoc = await PDFDocument.load(pdfData);
+  const page = pdfDoc.getPage(pageIndex);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  
+  // If covering old text, draw a white rectangle first
+  if (coverOldText) {
+    const textWidth = font.widthOfTextAtSize(newText, fontSize);
+    const textHeight = fontSize * 1.2;
+    page.drawRectangle({
+      x: x - 2,
+      y: y - 2,
+      width: textWidth + 4,
+      height: textHeight + 4,
+      color: rgb(1, 1, 1), // white
+    });
+  }
+  
+  // Draw the new text
+  page.drawText(newText, {
+    x,
+    y,
+    size: fontSize,
+    font,
+    color: rgb(0, 0, 0),
+  });
+  
+  return pdfDoc.save();
+};
+
+// Delete text by covering it with a white rectangle
+export const deleteTextInPdf = async (
+  pdfData: Uint8Array | ArrayBuffer,
+  pageIndex: number,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Promise<Uint8Array> => {
+  const pdfDoc = await PDFDocument.load(pdfData);
+  const page = pdfDoc.getPage(pageIndex);
+  
+  // Cover the text with a white rectangle
+  page.drawRectangle({
+    x,
+    y,
+    width,
+    height,
+    color: rgb(1, 1, 1), // white
+  });
+  
   return pdfDoc.save();
 };

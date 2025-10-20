@@ -1,8 +1,10 @@
+import React from 'react';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readFile, writeFile } from '@tauri-apps/plugin-fs';
 import PdfViewer from './components/PdfViewer';
 import Toolbar from './components/Toolbar';
 import { usePdf } from './hooks/usePdf';
+import { editTextInPdf, deleteTextInPdf } from './utils/pdfUtils';
 // import { usePageOps } from './hooks/usePageOps';
 import './App.css';
 
@@ -15,6 +17,8 @@ function App() {
     applyRemovePage,
     refreshKey,
   } = usePdf();
+  
+  const [isEditMode, setIsEditMode] = React.useState(false);
 
   const handleOpenFile = async () => {
     try {
@@ -80,6 +84,71 @@ function App() {
     // Page count changed
   };
 
+  const handleToggleEditMode = () => {
+    setIsEditMode(!isEditMode);
+  };
+
+  const handleTextEdit = async (
+    pageIndex: number,
+    x: number,
+    y: number,
+    newText: string,
+    fontSize: number,
+    _width: number,
+    _height: number
+  ) => {
+    if (!pdfData) return;
+
+    try {
+      console.log('Editing text at page', pageIndex, 'position', x, y, 'new text:', newText);
+      const updatedPdf = await editTextInPdf(
+        pdfData,
+        pageIndex,
+        x,
+        y,
+        newText,
+        fontSize,
+        true // Cover old text
+      );
+      
+      // Update the PDF data with the edited version
+      loadPdf(updatedPdf.buffer);
+      alert('Text edited successfully!');
+    } catch (error) {
+      console.error('Error editing text:', error);
+      alert('Error editing text: ' + error);
+    }
+  };
+
+  const handleTextDelete = async (
+    pageIndex: number,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => {
+    if (!pdfData) return;
+
+    try {
+      console.log('Deleting text at page', pageIndex, 'position', x, y);
+      const updatedPdf = await deleteTextInPdf(
+        pdfData,
+        pageIndex,
+        x,
+        y,
+        width,
+        height
+      );
+      
+      // Update the PDF data with the edited version
+      loadPdf(updatedPdf.buffer);
+      alert('Text deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting text:', error);
+      alert('Error deleting text: ' + error);
+    }
+  };
+
   // const { pdf, loadPdf } = usePdf();
   // const { reorderPages, mergePages, splitPage } = usePageOps();
 
@@ -96,7 +165,9 @@ function App() {
         }}
         onSplit={applyRemovePage}
         onSave={handleSaveAs}
+        onToggleEditMode={handleToggleEditMode}
         hasPdf={!!pdfData}
+        isEditMode={isEditMode}
       />
       <div className="file-controls p-4 bg-white border-b border-gray-300">
         <button
@@ -106,7 +177,14 @@ function App() {
           Open PDF
         </button>
       </div>
-      <PdfViewer pdfData={pdfData} refreshKey={refreshKey} onPageCountChange={handlePageCountChange} />
+      <PdfViewer 
+        pdfData={pdfData} 
+        refreshKey={refreshKey} 
+        onPageCountChange={handlePageCountChange}
+        isEditMode={isEditMode}
+        onTextEdit={handleTextEdit}
+        onTextDelete={handleTextDelete}
+      />
     </div>
   );
 }
