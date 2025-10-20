@@ -19,10 +19,6 @@ A powerful desktop PDF editor built with Tauri, React, and TypeScript. Edit PDFs
 - 🖥️ **Cross-Platform** - Works on Windows, macOS, and Linux
 - 🎨 **Modern UI** - Clean, intuitive interface with visual feedback
 
-## Screenshots
-
-![PDF Editor Interface](docs/screenshot.png)
-
 ## Installation
 
 ### Download Pre-built Binaries
