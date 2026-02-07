@@ -316,17 +316,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           {error}
         </div>
       )}
-      {isEditMode && (
-        <div className="edit-mode-indicator mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
-          <strong>Text Edit Mode Active:</strong> Click on any text to edit or delete it.
-          {textItems.length > 0 && (
-            <span className="ml-2">({textItems.length} text items found)</span>
-          )}
-          {textItems.length === 0 && pdfDoc && (
-            <span className="ml-2 text-orange-600">(No text items detected - may be a scanned PDF)</span>
-          )}
-        </div>
-      )}
       <div className="controls mb-4 flex items-center space-x-4 bg-white p-2 rounded shadow">
         <button
           onClick={goToPrevPage}
