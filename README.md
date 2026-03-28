@@ -40,10 +40,10 @@ npm run tauri build
 
 ## Python script
 
-This repo includes a helper Python script for automatic setup and launch: run.py
+This repo includes a helper Python script for automatic setup and launch: scripts/run.py
 
 ```bash
-python run.py
+python scripts/run.py
 ```
 
 ## License

@@ -6,7 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
 
 
 def is_windows():
@@ -130,7 +131,7 @@ def ensure_prerequisites():
         print("Node.js v18+ is required.")
         if prompt_install("Node.js"):
             ok = install_node(installer)
-    
+
     if not command_exists("rustup") and not command_exists("cargo"):
         print("Rust (rustup) is required.")
         if prompt_install("Rust (rustup)"):
@@ -145,19 +146,19 @@ def ensure_prerequisites():
 
 
 def ensure_node_modules():
-    node_modules = ROOT_DIR / "node_modules"
+    node_modules = PROJECT_ROOT / "node_modules"
     if node_modules.exists():
         return True
     print("Node dependencies not found. Installing...")
-    return run_command("npm install", cwd=str(ROOT_DIR))
+    return run_command("npm install", cwd=str(PROJECT_ROOT))
 
 
 def run_app():
-    return run_command("npm run tauri dev", cwd=str(ROOT_DIR))
+    return run_command("npm run tauri dev", cwd=str(PROJECT_ROOT))
 
 
 def main():
-    os.chdir(ROOT_DIR)
+    os.chdir(PROJECT_ROOT)
     print("Checking prerequisites...")
     if not ensure_prerequisites():
         print("Prerequisite check failed. Please resolve and re-run.")
