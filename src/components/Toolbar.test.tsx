@@ -22,6 +22,7 @@ describe("Toolbar", () => {
     vi.clearAllMocks();
     vi.spyOn(window, "alert").mockImplementation(() => undefined);
     vi.spyOn(window, "prompt").mockImplementation(() => null);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
   const renderToolbar = (hasPdf = true) =>
@@ -70,6 +71,30 @@ describe("Toolbar", () => {
     });
   });
 
+  it("does not move pages when prompt is empty", async () => {
+    vi.mocked(window.prompt).mockReturnValue("   ");
+
+    renderToolbar(true);
+    fireEvent.click(screen.getByText("Move Pages"));
+
+    await waitFor(() => {
+      expect(onMovePages).not.toHaveBeenCalled();
+      expect(window.alert).not.toHaveBeenCalledWith("Pages reordered successfully! Check the preview.");
+    });
+  });
+
+  it("alerts when move pages callback throws", async () => {
+    vi.mocked(window.prompt).mockReturnValue("1,0");
+    onMovePages.mockRejectedValueOnce(new Error("reorder failed"));
+
+    renderToolbar(true);
+    fireEvent.click(screen.getByText("Move Pages"));
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("Error reordering pages"));
+    });
+  });
+
   it("merges selected pdf buffer", async () => {
     vi.mocked(open).mockResolvedValue("C:/tmp/second.pdf");
     vi.mocked(readFile).mockResolvedValue(new Uint8Array([10, 20, 30]));
@@ -88,6 +113,31 @@ describe("Toolbar", () => {
     expect(Array.from(new Uint8Array(buffers[0]))).toEqual([10, 20, 30]);
   });
 
+  it("does nothing when merge dialog is canceled", async () => {
+    vi.mocked(open).mockResolvedValue(null);
+
+    renderToolbar(true);
+    fireEvent.click(screen.getByText("Merge"));
+
+    await waitFor(() => {
+      expect(readFile).not.toHaveBeenCalled();
+      expect(onMerge).not.toHaveBeenCalled();
+    });
+  });
+
+  it("handles merge read errors without calling onMerge", async () => {
+    vi.mocked(open).mockResolvedValue("C:/tmp/second.pdf");
+    vi.mocked(readFile).mockRejectedValue(new Error("read failed"));
+
+    renderToolbar(true);
+    fireEvent.click(screen.getByText("Merge"));
+
+    await waitFor(() => {
+      expect(onMerge).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalled();
+    });
+  });
+
   it("splits using prompted page index", async () => {
     vi.mocked(window.prompt).mockReturnValue("3");
 
@@ -99,11 +149,28 @@ describe("Toolbar", () => {
     });
   });
 
+  it("uses default split index when prompt is canceled", async () => {
+    vi.mocked(window.prompt).mockReturnValue(null);
+
+    renderToolbar(true);
+    fireEvent.click(screen.getByText("Split"));
+
+    await waitFor(() => {
+      expect(onSplit).toHaveBeenCalledWith(0);
+    });
+  });
+
   it("calls onSave when save is clicked", () => {
     renderToolbar(true);
 
     fireEvent.click(screen.getByText("Save"));
 
     expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables split button when no pdf is loaded", () => {
+    renderToolbar(false);
+
+    expect(screen.getByText("Split")).toBeDisabled();
   });
 });
