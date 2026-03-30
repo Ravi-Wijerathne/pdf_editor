@@ -1,4 +1,3 @@
-import React from 'react';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readFile, writeFile } from '@tauri-apps/plugin-fs';
 import PdfViewer from './components/PdfViewer';
