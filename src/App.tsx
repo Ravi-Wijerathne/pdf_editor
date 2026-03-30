@@ -18,7 +18,7 @@ function App() {
     refreshKey,
   } = usePdf();
   
-  const [isEditMode, setIsEditMode] = React.useState(false);
+  const isEditMode = false;
 
   const handleOpenFile = async () => {
     try {
@@ -82,10 +82,6 @@ function App() {
 
   const handlePageCountChange = () => {
     // Page count changed
-  };
-
-  const handleToggleEditMode = () => {
-    setIsEditMode(!isEditMode);
   };
 
   const handleTextEdit = async (
@@ -164,7 +160,7 @@ function App() {
           <div>
             <p className="app-eyebrow">Tauri PDF Workspace</p>
             <h1>PDF Editor</h1>
-            <p className="app-subtitle">Open, merge, reorder, split, and edit text with a cleaner workspace.</p>
+            <p className="app-subtitle">Open, merge, reorder, split, and save PDFs with a cleaner workspace.</p>
           </div>
           <button
             onClick={handleOpenFile}
@@ -186,9 +182,7 @@ function App() {
             }}
             onSplit={applyRemovePage}
             onSave={handleSaveAs}
-            onToggleEditMode={handleToggleEditMode}
             hasPdf={!!pdfData}
-            isEditMode={isEditMode}
           />
         </section>
 
