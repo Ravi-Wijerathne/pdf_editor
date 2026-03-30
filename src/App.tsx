@@ -155,38 +155,54 @@ function App() {
   // const { reorderPages, mergePages, splitPage } = usePageOps();
 
   return (
-    <div className="app min-h-screen bg-gray-50">
-      <Toolbar
-        onMovePages={applyReorderPages}
-        onMerge={async (buffers) => {
-          if (pdfData) {
-            await applyMergePdfs([pdfData, ...buffers]);
-          } else {
-            await applyMergePdfs(buffers);
-          }
-        }}
-        onSplit={applyRemovePage}
-        onSave={handleSaveAs}
-        onToggleEditMode={handleToggleEditMode}
-        hasPdf={!!pdfData}
-        isEditMode={isEditMode}
-      />
-      <div className="file-controls p-4 bg-white border-b border-gray-300">
-        <button
-          onClick={handleOpenFile}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Open PDF
-        </button>
+    <div className="app-shell">
+      <div className="app-shell__glow app-shell__glow--left" />
+      <div className="app-shell__glow app-shell__glow--right" />
+
+      <div className="app-frame">
+        <header className="app-header">
+          <div>
+            <p className="app-eyebrow">Tauri PDF Workspace</p>
+            <h1>PDF Editor</h1>
+            <p className="app-subtitle">Open, merge, reorder, split, and edit text with a cleaner workspace.</p>
+          </div>
+          <button
+            onClick={handleOpenFile}
+            className="btn btn-primary"
+          >
+            Open PDF
+          </button>
+        </header>
+
+        <section className="app-panel">
+          <Toolbar
+            onMovePages={applyReorderPages}
+            onMerge={async (buffers) => {
+              if (pdfData) {
+                await applyMergePdfs([pdfData, ...buffers]);
+              } else {
+                await applyMergePdfs(buffers);
+              }
+            }}
+            onSplit={applyRemovePage}
+            onSave={handleSaveAs}
+            onToggleEditMode={handleToggleEditMode}
+            hasPdf={!!pdfData}
+            isEditMode={isEditMode}
+          />
+        </section>
+
+        <section className="app-panel app-panel--viewer">
+          <PdfViewer 
+            pdfData={pdfData} 
+            refreshKey={refreshKey} 
+            onPageCountChange={handlePageCountChange}
+            isEditMode={isEditMode}
+            onTextEdit={handleTextEdit}
+            onTextDelete={handleTextDelete}
+          />
+        </section>
       </div>
-      <PdfViewer 
-        pdfData={pdfData} 
-        refreshKey={refreshKey} 
-        onPageCountChange={handlePageCountChange}
-        isEditMode={isEditMode}
-        onTextEdit={handleTextEdit}
-        onTextDelete={handleTextDelete}
-      />
     </div>
   );
 }

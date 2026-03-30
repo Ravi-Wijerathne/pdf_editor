@@ -49,18 +49,7 @@ const TextEditModal: React.FC<TextEditModalProps> = ({
 
   return (
     <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 99999,
-      }}
+      className="modal-backdrop"
       onClick={(e) => {
         // Close if clicking the backdrop
         if (e.target === e.currentTarget) {
@@ -70,88 +59,46 @@ const TextEditModal: React.FC<TextEditModalProps> = ({
       }}
     >
       <div 
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          padding: '24px',
-          width: '400px',
-          maxWidth: '90%',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        }}
+        className="modal-card"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>
+        <h2 className="modal-title">
           Edit Text
         </h2>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
+        <div className="modal-field">
+          <label className="modal-label">
             Text Content
           </label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
+            className="modal-textarea"
             rows={4}
             autoFocus
           />
         </div>
 
-        <div style={{ marginBottom: '16px', fontSize: '14px', color: '#6b7280' }}>
+        <div className="modal-meta">
           <p>Position: x={Math.round(position.x)}, y={Math.round(position.y)}</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="modal-actions">
           <button
             onClick={handleSave}
-            style={{
-              flex: 1,
-              padding: '8px 16px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '500',
-            }}
+            className="btn btn-primary"
           >
             Save
           </button>
           <button
             onClick={handleDelete}
-            style={{
-              flex: 1,
-              padding: '8px 16px',
-              backgroundColor: '#ef4444',
-              color: 'white',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '500',
-            }}
+            className="btn btn-danger"
           >
             Delete
           </button>
           <button
             onClick={onClose}
-            style={{
-              flex: 1,
-              padding: '8px 16px',
-              backgroundColor: '#d1d5db',
-              color: '#374151',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '500',
-            }}
+            className="btn btn-outline"
           >
             Cancel
           </button>

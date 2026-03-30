@@ -84,36 +84,48 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <div className="toolbar bg-gray-100 p-4 border-b border-gray-300">
-      <div className="flex space-x-2">
+    <div className="toolbar">
+      <div className="toolbar-group">
         <button
           onClick={handleMovePages}
           disabled={!hasPdf}
-          className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="btn btn-secondary"
         >
           Move Pages
         </button>
         <button
           onClick={handleMerge}
-          className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+          className="btn btn-accent"
         >
           Merge
         </button>
         <button
           onClick={handleSplit}
           disabled={!hasPdf}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="btn btn-danger"
         >
           Split
         </button>
         <button
           onClick={onSave}
           disabled={!hasPdf}
-          className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="btn btn-ghost"
         >
           Save
         </button>
       </div>
+
+      {onToggleEditMode && (
+        <div className="toolbar-group toolbar-group--end">
+          <button
+            onClick={onToggleEditMode}
+            disabled={!hasPdf}
+            className={isEditMode ? 'btn btn-warn' : 'btn btn-outline'}
+          >
+            {isEditMode ? 'Exit Edit Mode' : 'Enter Edit Mode'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

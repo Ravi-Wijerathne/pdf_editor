@@ -310,52 +310,59 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   };
 
   return (
-    <div className="pdf-viewer p-4">
+    <div className="viewer-root">
       {error && (
-        <div className="error-message mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="error-message">
           {error}
         </div>
       )}
-      <div className="controls mb-4 flex items-center space-x-4 bg-white p-2 rounded shadow">
-        <button
-          onClick={goToPrevPage}
-          disabled={currentPage <= 1}
-          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span className="text-sm">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={goToNextPage}
-          disabled={currentPage >= totalPages}
-          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-        >
-          Next
-        </button>
-        <button
-          onClick={zoomOut}
-          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-        >
-          Zoom Out
-        </button>
-        <button
-          onClick={zoomIn}
-          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-        >
-          Zoom In
-        </button>
+
+      <div className="viewer-toolbar">
+        <div className="viewer-toolbar__group">
+          <button
+            onClick={goToPrevPage}
+            disabled={currentPage <= 1}
+            className="btn btn-outline"
+          >
+            Previous
+          </button>
+          <span className="viewer-page-indicator">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={goToNextPage}
+            disabled={currentPage >= totalPages}
+            className="btn btn-outline"
+          >
+            Next
+          </button>
+        </div>
+
+        <div className="viewer-toolbar__group">
+          <button
+            onClick={zoomOut}
+            className="btn btn-outline"
+          >
+            Zoom Out
+          </button>
+          <button
+            onClick={zoomIn}
+            className="btn btn-outline"
+          >
+            Zoom In
+          </button>
+        </div>
       </div>
+
       <div 
-        className="canvas-container bg-gray-50 p-4 rounded shadow overflow-auto"
+        className="canvas-stage"
         ref={containerRef}
         style={{ position: 'relative' }}
       >
-        <div style={{ position: 'relative', display: 'inline-block' }}>
+        <div className="canvas-frame" style={{ position: 'relative', display: 'inline-block' }}>
           <canvas 
             ref={canvasRef} 
-            className="border border-gray-300"
+            className="pdf-canvas"
             style={{ 
               display: 'block',
               pointerEvents: isEditMode ? 'none' : 'auto', // Disable canvas clicks in edit mode
@@ -364,6 +371,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           {/* Overlay for text selection */}
           {isEditMode && canvasRef.current && (
             <div
+              className="text-overlay"
               style={{
                 position: 'absolute',
                 top: 0,
