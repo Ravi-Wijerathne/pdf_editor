@@ -1,14 +1,6 @@
 import React from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
-import { 
-  Files, 
-  Scissors, 
-  Save, 
-  Edit3, 
-  Eye, 
-  ArrowRightLeft
-} from 'lucide-react';
 
 interface ToolbarProps {
   onMovePages: (newOrder: number[]) => void;
@@ -30,26 +22,36 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isEditMode = false,
 }) => {
   const handleMovePages = async () => {
+    console.log('handleMovePages called, hasPdf:', hasPdf);
+    
     if (!hasPdf) {
+      console.log('No PDF loaded, returning');
       alert('Please open a PDF file first');
       return;
     }
     
     const orderStr = prompt('Enter new page order (comma-separated indices, e.g., 1,0,2):') || '';
+    console.log('User entered order string:', orderStr);
     
     if (!orderStr.trim()) {
+      console.log('Empty order string, returning');
       return;
     }
     
     const newOrder = orderStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+    console.log('Parsed order array:', newOrder);
     
     if (newOrder.length === 0) {
+      console.log('No valid numbers in order, returning');
       alert('Please enter valid page numbers (e.g., 1,0)');
       return;
     }
     
+    console.log('Calling onMovePages with:', newOrder);
+    
     try {
       await onMovePages(newOrder);
+      console.log('onMovePages call completed');
       alert('Pages reordered successfully! Check the preview.');
     } catch (error) {
       console.error('Error in onMovePages:', error);
@@ -65,6 +67,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       });
       if (selected && typeof selected === 'string') {
         const contents = await readFile(selected);
+        // Convert Uint8Array to ArrayBuffer using a fresh buffer to avoid detached issues
         const freshBuffer = new ArrayBuffer(contents.byteLength);
         new Uint8Array(freshBuffer).set(contents);
         onMerge([freshBuffer]);
@@ -81,74 +84,48 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm border-b border-slate-200 shadow-sm">
-      <div className="flex items-center px-4 py-2 gap-3">
-        <div className="flex-1 flex items-center">
-          <h1 className="text-sm font-semibold text-slate-800">PDF Editor</h1>
-        </div>
+    <div className="toolbar">
+      <div className="toolbar-group">
+        <button
+          onClick={handleMovePages}
+          disabled={!hasPdf}
+          className="btn btn-secondary"
+        >
+          Move Pages
+        </button>
+        <button
+          onClick={handleMerge}
+          className="btn btn-accent"
+        >
+          Merge
+        </button>
+        <button
+          onClick={handleSplit}
+          disabled={!hasPdf}
+          className="btn btn-danger"
+        >
+          Split
+        </button>
+        <button
+          onClick={onSave}
+          disabled={!hasPdf}
+          className="btn btn-ghost"
+        >
+          Save
+        </button>
+      </div>
 
-        <div className="flex justify-center">
-          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-            <button
-              onClick={handleMovePages}
-              disabled={!hasPdf}
-              title="Reorder Pages"
-              className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 rounded-md hover:bg-white hover:shadow-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:shadow-none"
-            >
-              <ArrowRightLeft className="w-3.5 h-3.5" />
-              <span>Move</span>
-            </button>
-            
-            <div className="w-px h-5 bg-slate-300" />
-            
-            <button
-              onClick={handleMerge}
-              title="Merge PDFs"
-              className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 rounded-md hover:bg-white hover:shadow-sm transition-all duration-200"
-            >
-              <Files className="w-3.5 h-3.5" />
-              <span>Merge</span>
-            </button>
-            
-            <button
-              onClick={handleSplit}
-              disabled={!hasPdf}
-              title="Remove Page"
-              className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 rounded-md hover:bg-white hover:shadow-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:shadow-none"
-            >
-              <Scissors className="w-3.5 h-3.5" />
-              <span>Split</span>
-            </button>
-
-            <div className="w-px h-5 bg-slate-300" />
-
-            <button
-              onClick={onSave}
-              disabled={!hasPdf}
-              title="Save PDF"
-              className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 rounded-md hover:bg-white hover:shadow-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:shadow-none"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Save</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 flex justify-end">
+      {onToggleEditMode && (
+        <div className="toolbar-group toolbar-group--end">
           <button
             onClick={onToggleEditMode}
             disabled={!hasPdf}
-            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md font-medium text-xs transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
-              isEditMode 
-                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md hover:shadow-lg' 
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
+            className={isEditMode ? 'btn btn-warn' : 'btn btn-outline'}
           >
-            {isEditMode ? <Edit3 className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            {isEditMode ? 'Edit Mode' : 'View Mode'}
+            {isEditMode ? 'Exit Edit Mode' : 'Enter Edit Mode'}
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };

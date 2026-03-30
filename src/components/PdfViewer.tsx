@@ -1,14 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  ZoomIn, 
-  ZoomOut,
-  Maximize2,
-  Edit3
-} from 'lucide-react';
 import TextEditModal from './TextEditModal';
 import { TextItem } from '../utils/pdfUtils';
 
@@ -318,101 +310,68 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   };
 
   return (
-    <div className="pdf-viewer p-4 flex flex-col h-[calc(100vh-120px)]">
+    <div className="viewer-root">
       {error && (
-        <div className="error-message mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl shadow-sm">
+        <div className="error-message">
           {error}
         </div>
       )}
-      
-      <div className="controls mb-4 flex items-center justify-between bg-white rounded-xl shadow-sm border border-slate-200 p-2">
-        <div className="flex items-center gap-2">
+
+      <div className="viewer-toolbar">
+        <div className="viewer-toolbar__group">
           <button
             onClick={goToPrevPage}
             disabled={currentPage <= 1}
-            className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            className="btn btn-outline"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Prev
+            Previous
           </button>
-          
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg">
-            <input
-              type="number"
-              min={1}
-              max={totalPages}
-              value={currentPage}
-              onChange={(e) => {
-                const val = parseInt(e.target.value);
-                if (val >= 1 && val <= totalPages) {
-                  setCurrentPage(val);
-                }
-              }}
-              className="w-12 text-center text-sm font-medium bg-transparent border-none outline-none text-slate-700"
-            />
-            <span className="text-slate-400 text-sm">/</span>
-            <span className="text-slate-600 text-sm font-medium">{totalPages}</span>
-          </div>
-          
+          <span className="viewer-page-indicator">
+            Page {currentPage} of {totalPages}
+          </span>
           <button
             onClick={goToNextPage}
             disabled={currentPage >= totalPages}
-            className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            className="btn btn-outline"
           >
             Next
-            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+        <div className="viewer-toolbar__group">
           <button
             onClick={zoomOut}
-            className="flex items-center justify-center w-8 h-8 text-slate-600 hover:bg-white hover:shadow-sm rounded-md transition-all duration-200"
-            title="Zoom Out"
+            className="btn btn-outline"
           >
-            <ZoomOut className="w-4 h-4" />
+            Zoom Out
           </button>
-          
-          <span className="px-2 text-sm font-medium text-slate-600 min-w-[50px] text-center">
-            {Math.round(scale * 100)}%
-          </span>
-          
           <button
             onClick={zoomIn}
-            className="flex items-center justify-center w-8 h-8 text-slate-600 hover:bg-white hover:shadow-sm rounded-md transition-all duration-200"
-            title="Zoom In"
+            className="btn btn-outline"
           >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-
-          <div className="w-px h-5 bg-slate-300 mx-1" />
-          
-          <button
-            onClick={() => setScale(1.5)}
-            className="flex items-center justify-center w-8 h-8 text-slate-600 hover:bg-white hover:shadow-sm rounded-md transition-all duration-200"
-            title="Fit to View"
-          >
-            <Maximize2 className="w-4 h-4" />
+            Zoom In
           </button>
         </div>
       </div>
 
       <div 
-        className="canvas-container flex-1 bg-slate-100/50 p-4 rounded-xl shadow-inner border border-slate-200 overflow-auto"
+        className="canvas-stage"
         ref={containerRef}
         style={{ position: 'relative' }}
       >
-        <div style={{ position: 'relative', display: 'inline-block', minWidth: '100%', textAlign: 'center' }}>
+        <div className="canvas-frame" style={{ position: 'relative', display: 'inline-block' }}>
           <canvas 
             ref={canvasRef} 
-            className="shadow-xl rounded-lg mx-auto"
+            className="pdf-canvas"
             style={{ 
               display: 'block',
-              pointerEvents: isEditMode ? 'none' : 'auto',
+              pointerEvents: isEditMode ? 'none' : 'auto', // Disable canvas clicks in edit mode
             }}
           />
+          {/* Overlay for text selection */}
           {isEditMode && canvasRef.current && (
             <div
+              className="text-overlay"
               style={{
                 position: 'absolute',
                 top: 0,
@@ -422,40 +381,47 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                 pointerEvents: 'auto',
                 zIndex: 10,
               }}
+              onClick={() => {
+                console.log('Overlay clicked (background)');
+              }}
             >
               {textItems.map((item, index) => (
                 <div
                   key={index}
+                  data-text={item.text}
+                  data-index={index}
                   style={{
                     position: 'absolute',
                     left: `${item.x}px`,
                     top: `${item.y}px`,
                     width: `${item.width}px`,
                     height: `${item.height}px`,
-                    border: highlightedItem === item ? '2px solid rgba(245, 158, 11, 0.9)' : '2px solid rgba(59, 130, 246, 0.6)',
-                    backgroundColor: highlightedItem === item ? 'rgba(251, 191, 36, 0.25)' : 'rgba(59, 130, 246, 0.1)',
+                    border: highlightedItem === item ? '3px solid rgba(255, 200, 0, 0.9)' : '2px solid rgba(0, 150, 255, 0.6)',
+                    backgroundColor: highlightedItem === item ? 'rgba(255, 255, 0, 0.4)' : 'rgba(0, 150, 255, 0.15)',
                     cursor: 'pointer',
                     boxSizing: 'border-box',
                     transition: 'all 0.15s ease',
                     pointerEvents: 'auto',
                     zIndex: 20,
-                    borderRadius: '2px',
                   }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('✓ CLICKED text item:', item.text, 'at index:', index);
+                    console.log('Setting selectedTextItem to:', item);
+                    console.log('Setting isModalOpen to: true');
                     setSelectedTextItem(item);
                     setIsModalOpen(true);
+                    console.log('After setState - isModalOpen should be true, selectedTextItem should be set');
                   }}
                   onMouseEnter={(e) => {
+                    console.log('→ Hovering over:', item.text);
                     setHighlightedItem(item);
                     e.currentTarget.style.transform = 'scale(1.02)';
-                    e.currentTarget.style.zIndex = '30';
                   }}
                   onMouseLeave={(e) => {
                     setHighlightedItem(null);
                     e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.zIndex = '20';
                   }}
                   title={`Click to edit: "${item.text}"`}
                 />
@@ -464,13 +430,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           )}
         </div>
       </div>
-
-      {isEditMode && (
-        <div className="mt-3 flex items-center justify-center gap-2 text-sm text-slate-500">
-          <Edit3 className="w-4 h-4" />
-          <span>Click on any text to edit or delete it</span>
-        </div>
-      )}
 
       <TextEditModal
         isOpen={isModalOpen}

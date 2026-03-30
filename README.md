@@ -38,6 +38,33 @@ npm run tauri dev
 npm run tauri build
 ```
 
+## Testing
+
+### Automated tests
+
+```bash
+# run all tests once
+npm run test
+
+# watch mode while developing tests
+npm run test:watch
+
+# run tests with coverage output
+npm run test:coverage
+```
+
+Coverage reports are generated in `coverage/`.
+
+### Current focus
+
+- Unit tests for core PDF operations in `src/utils/pdfUtils.ts`
+- Hook tests for state transitions in `src/hooks/usePdf.ts`
+- Component behavior tests for text edit modal and app workflows
+
+### Manual QA checklist
+
+A feature-complete manual checklist is available in `docs/testing-checklist.md`.
+
 ## Python script
 
 This repo includes a helper Python script for automatic setup and launch: scripts/run.py
