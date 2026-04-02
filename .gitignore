@@ -7,10 +7,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node dependencies
 node_modules
 dist
 dist-ssr
 *.local
+
+# Build outputs
+/release
+target
+
+# Tauri
+src-tauri/target
+src-tauri/gen
 
 # Editor directories and files
 .vscode/*
@@ -22,8 +31,17 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-/release/GITHUB_RELEASE_GUIDE.md
-/release/README_RELEASE_SUMMARY.md
-/release/RELEASE_NOTES.md
-release
-.vscode
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage
+
+# Misc
+*.tsbuildinfo
+
+# Rust
+rustup-init.exe
