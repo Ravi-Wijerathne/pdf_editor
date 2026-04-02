@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
 import {
-  deleteTextInPdf,
-  editTextInPdf,
   insertText,
   mergePdfs,
   removePage,
@@ -55,24 +53,6 @@ describe("pdfUtils", () => {
     const source = await createPdfWithPageWidths([240]);
 
     const updated = await insertText(source, 0, "Hello", 30, 40, 14);
-    const result = await PDFDocument.load(updated);
-
-    expect(result.getPageCount()).toBe(1);
-  });
-
-  it("edits text overlay and keeps document valid", async () => {
-    const source = await createPdfWithPageWidths([280]);
-
-    const updated = await editTextInPdf(source, 0, 20, 30, "Updated text", 12, 40, 12, true);
-    const result = await PDFDocument.load(updated);
-
-    expect(result.getPageCount()).toBe(1);
-  });
-
-  it("deletes text region overlay and keeps document valid", async () => {
-    const source = await createPdfWithPageWidths([320]);
-
-    const updated = await deleteTextInPdf(source, 0, 25, 35, 50, 14);
     const result = await PDFDocument.load(updated);
 
     expect(result.getPageCount()).toBe(1);

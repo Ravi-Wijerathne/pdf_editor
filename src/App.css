@@ -37,6 +37,53 @@ body {
   overflow: hidden;
 }
 
+.notification-stack {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  gap: 8px;
+  width: min(430px, calc(100vw - 24px));
+  z-index: 100000;
+}
+
+.notification {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: #ffffff;
+  color: #0f172a;
+  padding: 10px 12px;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+}
+
+.notification--success {
+  border-color: #7fc7b8;
+  background: #edf9f6;
+}
+
+.notification--error {
+  border-color: #efb8b2;
+  background: #fff1f1;
+}
+
+.notification--info {
+  border-color: #c4d6f0;
+  background: #eef5ff;
+}
+
+.notification__close {
+  border: 0;
+  background: transparent;
+  color: #3c4a64;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
 .app-shell__glow {
   position: absolute;
   width: 360px;
@@ -334,6 +381,26 @@ body {
 .btn-warn {
   color: #ffffff;
   background: linear-gradient(135deg, #efae2b 0%, var(--warning) 100%);
+}
+
+.app-crash {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: linear-gradient(170deg, #f8fbff 0%, #edf4ff 100%);
+}
+
+.app-crash__title {
+  margin: 0;
+  font-size: 1.9rem;
+}
+
+.app-crash__message {
+  margin: 0;
+  color: #495977;
 }
 
 @media (max-width: 900px) {

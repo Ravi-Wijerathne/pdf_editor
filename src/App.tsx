@@ -1,12 +1,19 @@
-import React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readFile, writeFile } from '@tauri-apps/plugin-fs';
 import PdfViewer from './components/PdfViewer';
 import Toolbar from './components/Toolbar';
 import { usePdf } from './hooks/usePdf';
-import { editTextInPdf, deleteTextInPdf } from './utils/pdfUtils';
 // import { usePageOps } from './hooks/usePageOps';
 import './App.css';
+
+type NotificationType = 'success' | 'error' | 'info';
+
+interface AppNotification {
+  id: number;
+  type: NotificationType;
+  message: string;
+}
 
 function App() {
   const {
@@ -17,8 +24,41 @@ function App() {
     applyRemovePage,
     refreshKey,
   } = usePdf();
-  
-  const isEditMode = false;
+
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const notificationRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  const dismissNotification = (id: number) => {
+    setNotifications((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const dismissLatestNotification = () => {
+    setNotifications((prev) => {
+      if (prev.length === 0) {
+        return prev;
+      }
+      const latest = prev[prev.length - 1];
+      return prev.filter((item) => item.id !== latest.id);
+    });
+  };
+
+  const pushNotification = (message: string, type: NotificationType = 'info') => {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+    setNotifications((prev) => [...prev, { id, type, message }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((item) => item.id !== id));
+    }, 3500);
+  };
+
+  useEffect(() => {
+    if (notifications.length === 0) {
+      return;
+    }
+
+    const latest = notifications[notifications.length - 1];
+    notificationRefs.current[latest.id]?.focus();
+  }, [notifications]);
 
   const handleOpenFile = async () => {
     try {
@@ -50,13 +90,13 @@ function App() {
       }
     } catch (error) {
       console.error('Error opening file:', error);
-      alert('Error opening file: ' + error);
+      pushNotification('Error opening file: ' + error, 'error');
     }
   };
 
   const handleSaveAs = async () => {
     if (!pdfData) {
-      alert('No PDF data to save');
+      pushNotification('No PDF data to save', 'info');
       return;
     }
     try {
@@ -72,11 +112,11 @@ function App() {
         console.log('Writing file directly with Uint8Array, size:', pdfData.length);
         await writeFile(filePath, pdfData);
         console.log('File saved successfully to:', filePath);
-        alert('PDF saved successfully!');
+        pushNotification('PDF saved successfully!', 'success');
       }
     } catch (error) {
       console.error('Error saving file:', error);
-      alert('Error saving file: ' + error);
+      pushNotification('Error saving file: ' + error, 'error');
     }
   };
 
@@ -84,74 +124,43 @@ function App() {
     // Page count changed
   };
 
-  const handleTextEdit = async (
-    pageIndex: number,
-    x: number,
-    y: number,
-    newText: string,
-    fontSize: number,
-    width: number,
-    height: number
-  ) => {
-    if (!pdfData) return;
-
-    try {
-      console.log('App handleTextEdit - Editing text at page', pageIndex, 'position', x, y, 'new text:', newText, 'old dimensions:', width, height);
-      const updatedPdf = await editTextInPdf(
-        pdfData,
-        pageIndex,
-        x,
-        y,
-        newText,
-        fontSize,
-        width,  // Pass old text width
-        height, // Pass old text height
-        true    // Cover old text
-      );
-      
-      // Update the PDF data with the edited version
-      loadPdf(updatedPdf.buffer as ArrayBuffer);
-      alert('Text edited successfully!');
-    } catch (error) {
-      console.error('Error editing text:', error);
-      alert('Error editing text: ' + error);
-    }
-  };
-
-  const handleTextDelete = async (
-    pageIndex: number,
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ) => {
-    if (!pdfData) return;
-
-    try {
-      console.log('Deleting text at page', pageIndex, 'position', x, y);
-      const updatedPdf = await deleteTextInPdf(
-        pdfData,
-        pageIndex,
-        x,
-        y,
-        width,
-        height
-      );
-      
-      // Update the PDF data with the edited version
-      loadPdf(updatedPdf.buffer as ArrayBuffer);
-      alert('Text deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting text:', error);
-      alert('Error deleting text: ' + error);
-    }
-  };
-
   // const { pdf, loadPdf } = usePdf();
   // const { reorderPages, mergePages, splitPage } = usePageOps();
 
   return (
     <div className="app-shell">
+      <div className="notification-stack" aria-live="polite" aria-atomic="false">
+        {notifications.map((item) => (
+          <div
+            key={item.id}
+            className={`notification notification--${item.type}`}
+            role={item.type === 'error' ? 'alert' : 'status'}
+            aria-live={item.type === 'error' ? 'assertive' : 'polite'}
+            tabIndex={0}
+            ref={(element) => {
+              notificationRefs.current[item.id] = element;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                dismissLatestNotification();
+              }
+            }}
+          >
+            <span>{item.message}</span>
+            <button
+              className="notification__close"
+              onClick={() => {
+                dismissNotification(item.id);
+              }}
+              aria-label="Dismiss notification"
+            >
+              x
+            </button>
+          </div>
+        ))}
+      </div>
+
       <div className="app-shell__glow app-shell__glow--left" />
       <div className="app-shell__glow app-shell__glow--right" />
 
@@ -182,6 +191,7 @@ function App() {
             }}
             onSplit={applyRemovePage}
             onSave={handleSaveAs}
+            onNotify={pushNotification}
             hasPdf={!!pdfData}
           />
         </section>
@@ -191,9 +201,6 @@ function App() {
             pdfData={pdfData} 
             refreshKey={refreshKey} 
             onPageCountChange={handlePageCountChange}
-            isEditMode={isEditMode}
-            onTextEdit={handleTextEdit}
-            onTextDelete={handleTextDelete}
           />
         </section>
       </div>

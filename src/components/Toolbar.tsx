@@ -7,9 +7,8 @@ interface ToolbarProps {
   onMerge: (pdfBuffers: ArrayBuffer[]) => void;
   onSplit: (pageIndex: number) => void;
   onSave: () => void;
-  onToggleEditMode?: () => void;
+  onNotify?: (message: string, type?: 'success' | 'error' | 'info') => void;
   hasPdf: boolean;
-  isEditMode?: boolean;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -17,16 +16,23 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onMerge,
   onSplit,
   onSave,
-  onToggleEditMode,
+  onNotify,
   hasPdf,
-  isEditMode = false,
 }) => {
+  const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    if (onNotify) {
+      onNotify(message, type);
+      return;
+    }
+    alert(message);
+  };
+
   const handleMovePages = async () => {
     console.log('handleMovePages called, hasPdf:', hasPdf);
     
     if (!hasPdf) {
       console.log('No PDF loaded, returning');
-      alert('Please open a PDF file first');
+      notify('Please open a PDF file first', 'info');
       return;
     }
     
@@ -43,7 +49,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
     
     if (newOrder.length === 0) {
       console.log('No valid numbers in order, returning');
-      alert('Please enter valid page numbers (e.g., 1,0)');
+      notify('Please enter valid page numbers (e.g., 1,0)', 'error');
       return;
     }
     
@@ -52,10 +58,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
     try {
       await onMovePages(newOrder);
       console.log('onMovePages call completed');
-      alert('Pages reordered successfully! Check the preview.');
+      notify('Pages reordered successfully! Check the preview.', 'success');
     } catch (error) {
       console.error('Error in onMovePages:', error);
-      alert('Error reordering pages: ' + error);
+      notify('Error reordering pages: ' + error, 'error');
     }
   };
 
@@ -114,18 +120,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
           Save
         </button>
       </div>
-
-      {onToggleEditMode && (
-        <div className="toolbar-group toolbar-group--end">
-          <button
-            onClick={onToggleEditMode}
-            disabled={!hasPdf}
-            className={isEditMode ? 'btn btn-warn' : 'btn btn-outline'}
-          >
-            {isEditMode ? 'Exit Edit Mode' : 'Enter Edit Mode'}
-          </button>
-        </div>
-      )}
     </div>
   );
 };
